@@ -1,8 +1,7 @@
 {
-  "siteUrl": "https://aymanalburaidi.github.io/AiWorkShop/",
+  "siteUrl": "https://aymanalburaidi.github.io/AiWorkShop-Live/",
   "joinPath": "join/",
-  "joinShortUrl": "https://go.yafea.org.sa/VKVV",
-  "room": "hs7-ai",
+  "room": "live-lab",
   "supabaseUrl": "https://dqedhfwaquqaddbtfvtx.supabase.co",
   "supabaseKey": "sb_publishable_zROcySsWThanD_me0Dq8dw_tGAHzGKk",
   "supabaseJs": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"

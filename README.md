@@ -1,9 +1,12 @@
-# ورشة عمل: الذكاء الاصطناعي في خدمة المعلم والمعلمة
+# AiWorkShop-Live: تجربة ورشة العمل بلا زوم
+
+نسخة تجريبية من [AiWorkShop](https://github.com/aymanalburaidi/AiWorkShop) لبناء الصوت المباشر داخل العرض وبوابة الحضور. الغرفة `live-lab` منفصلة عن غرفة ورشة العمل الأصلية.
+
 
 عرض تقديمي تفاعلي (للشاشة) وصفحة مشاركة للجوال، منشوران على GitHub Pages.
 
-- العرض: https://aymanalburaidi.github.io/AiWorkShop/
-- بوابة الحضور: https://go.yafea.org.sa/VKVV (رابط مختصر يحوّل إلى https://aymanalburaidi.github.io/AiWorkShop/join/)
+- العرض: https://aymanalburaidi.github.io/AiWorkShop-Live/
+- بوابة الحضور: https://go.yafea.org.sa/VKVV (رابط مختصر يحوّل إلى https://aymanalburaidi.github.io/AiWorkShop-Live/join/)
 
 الرابط المكتوب على شاشة العرض هو المختصر (`joinShortUrl` في `config.json`)، ورمز QR يفتح الرابط المباشر.
 

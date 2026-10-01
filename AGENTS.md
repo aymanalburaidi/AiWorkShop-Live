@@ -1,4 +1,14 @@
-# AiWorkShop
+# AiWorkShop-Live
+
+Experimental fork of `C:\VIBE\AiWorkShop` (repo aymanalburaidi/AiWorkShop) to replace Zoom: live presenter audio, attendee mic on raised hand, then screen share, all inside the deck and the attendee portal. Every session is remote; there is no in-room audience.
+
+## Isolation (read first)
+- Never edit `C:\VIBE\AiWorkShop` or push to its repo from here. Changes flow one way: port proven features back by hand, later, only when the user asks.
+- Room is `live-lab` (key in `secrets/presenter-key.txt`). Never read or write rooms `hs7-ai` or `hs7-ai-test`.
+- Supabase project is shared with AiWorkShop: never alter existing `aiws_*` tables, functions or policies (the live workshop depends on them). New objects for this experiment use the prefix `aiws_live_`.
+- No short link: the QR and displayed URL point at this repo's Pages site.
+
+## Inherited from AiWorkShop
 
 Workshop deck (desktop, presenter screen) + participant phone page (iPhone-first), published via GitHub Pages from `docs/`.
 
@@ -32,6 +42,6 @@ Workshop deck (desktop, presenter screen) + participant phone page (iPhone-first
 - Embedded live view: `src/join.html` iframes the deck as `../?view=1` (rendered at 1536×864, the smallest size where every slide fits, then scaled). `VIEW` decks are read-only (no keys, no presenter key, no net canvas), reuse the parent page's Supabase client (`window.AIWS.sb`) instead of opening a second socket, and apply presenter state from the `aiws-live-<room>` broadcast (`st` full snapshot on every change and every 5 s, `r` reaction batches, `hide`). Any new in-slide presenter control must be added to `Sync.snap`/`Sync.apply` in `src/deck.html`, or viewers will not see it. Thumbs go phone → REST broadcast → `aiws-react-<room>` (phones do not subscribe to it).
 - Presenter inbox and announcements: `aiws_questions` is insert-only for anon (no SELECT grant); the notes page reads it every 4 s via `aiws_questions_list` and marks rows with `aiws_question_done`, both key-checked. The public message lives in `aiws_state.announce`/`announce_at` (set by `aiws_announce`) and reaches phones with the room state. Showing a question on screen goes notes → deck over the key-derived ctl channel (`{t:'q'}`), and the deck mirrors it to viewers as `qs` in the sync snapshot. `aiws_reset('all')` clears both. Questions are private: export them to `questions.csv`/`data.json`, never to `report.html`.
  (DB check).
-- Rehearsal: `AIWS_ROOM=hs7-ai-test AIWS_OUT=.test-build node scripts/build.mjs` builds against the separate test room (key in `secrets/test-room.txt`) into the gitignored `.test-build/`. Test there, never in `hs7-ai`.
+- Testing: the whole project runs in room `live-lab`, so `pnpm run build` is the test build. Never point it at `hs7-ai` or `hs7-ai-test`.
 - Phone page layout: one column (560px, 720px from 700px wide); from 1000px wide and while the live view is shown, two columns (`.stage` beside `.side`). "Theater" (`body.watch.theater`) is the full-screen view with translucent reaction buttons: automatic on landscape phones (max-height 560px), manual via "ملء الشاشة" on tablets/laptops (`body.manual`, Fullscreen API when available, Esc or the X exits). Check 390, 768, 1024, 1366 and 1920 widths plus 844×390 after layout changes.
 - `secrets/` (presenter key) is gitignored. Never commit it or print it into built files.
