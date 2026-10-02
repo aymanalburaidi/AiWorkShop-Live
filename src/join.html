@@ -231,6 +231,8 @@ body:not(.watch) .stage-full{display:none!important}
   body.watch .stage{top:calc(env(safe-area-inset-top) + 12px)}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* تشخيص انهيار Safari عند التدوير (?lite=1): بلا blur ولا backdrop-filter ولا حركات متكررة */
+body.lite *,body.lite *::before,body.lite *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;filter:none!important;animation-iteration-count:1!important}
 </style>
 <script src="{{cfg.supabaseJs}}" defer></script>
 <script src="{{cfg.livekitJs}}" defer></script>
@@ -622,7 +624,10 @@ $('#annX').onclick = () => { store.set('ann_x', annAt); $('#announce').hidden = 
 
 /* ---------- العرض المباشر ---------- */
 window.AIWS = { get sb(){ return sb; } };   // تستعمله النسخة المضمَّنة بدل فتح اتصال ثانٍ
-const frame = $('#stageFrame'), stageBox = $('#stageBox'), FRAME_SRC = '../?view=1';
+// مفاتيح تشخيص مؤقتة لانهيار Safari عند التدوير: ?frame=0 بلا عرض مضمّن، و?lite=1 بلا مؤثرات رسم
+const DIAG = new URLSearchParams(location.search), NOFRAME = DIAG.get('frame') === '0', LITE = DIAG.has('lite');
+if (LITE) document.body.classList.add('lite');
+const frame = $('#stageFrame'), stageBox = $('#stageBox'), FRAME_SRC = '../?view=1' + (LITE ? '&lite=1' : '');
 let watching = store.get('watch', true), wake = null;
 const fit = () => { frame.style.transform = 'scale(' + (stageBox.clientWidth / 1536) + ')'; };
 if (window.ResizeObserver) new ResizeObserver(fit).observe(stageBox); else addEventListener('resize', fit);
@@ -647,7 +652,7 @@ function setWatch(on){
   document.body.classList.toggle('watch', on);
   stageBox.hidden = !on;
   $('#stageToggle').textContent = on ? D.t.stage_hide : D.t.stage_show;
-  if (on) { if (!frame.src.endsWith(FRAME_SRC.slice(2))) frame.src = FRAME_SRC; fit(); }
+  if (on && !NOFRAME) { if (!frame.src.endsWith(FRAME_SRC.slice(2))) frame.src = FRAME_SRC; fit(); }
   else frame.src = 'about:blank';   // إيقاف النسخة يوفّر البطارية
   keepAwake(); applyTheater();
 }
@@ -834,7 +839,10 @@ document.addEventListener('visibilitychange', () => {
 });
 addEventListener('online', () => { plog('page_online'); if (wantAudio && lk && lk.state === 'disconnected') lkJoin(); });
 addEventListener('offline', () => plog('page_offline'));
-plog('open', { audio: wantAudio, named: !!name });
+plog('open', { audio: wantAudio, named: !!name, frame: !NOFRAME, lite: LITE, w: innerWidth, h: innerHeight, dpr: devicePixelRatio });
+// تسجيل فقط (لا يغيّر السلوك): كل انقلاب بين العمودي والأفقي، ليُعرف إن كان الانهيار يتبع التدوير
+let wasPortrait = innerHeight > innerWidth;
+addEventListener('resize', () => { const p = innerHeight > innerWidth; if (p !== wasPortrait) { wasPortrait = p; plog('rotate', { portrait: p, w: innerWidth, h: innerHeight, theater: document.body.classList.contains('theater') }); probeFlush(); } });
 // من عادت باسم محفوظ والصوت غير مكتوم: نافذة تغطي الصفحة، ولمستها تشغّل الصوت (وتبقي الشاشة مضاءة)
 $('#gate').hidden = !(name && wantAudio);
 $('#gateBtn').onclick = () => { $('#gate').hidden = true; audioStart('gate'); keepAwake(); };

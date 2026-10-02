@@ -619,6 +619,9 @@ body.viewer .toast,body.viewer .roster-tab{display:none}   /* زر لوحة ال
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .react{animation:none!important;transform:translate(calc(-50% + var(--dx,0px)),0)}   /* بلا حركة: التفاعل يظهر ثابتًا ثم يُزال */
 }
+/* تشخيص انهيار Safari عند التدوير (?lite=1): بلا blur ولا backdrop-filter ولا حركات متكررة */
+body.lite *,body.lite *::before,body.lite *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;filter:none!important;animation-iteration-count:1!important}
+body.lite #confetti{display:none!important}
 </style>
 <script src="{{cfg.supabaseJs}}" defer></script>
 </head>
@@ -1015,6 +1018,7 @@ const escHtml = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;',
 // ?view: نسخة للمشاهدة داخل صفحة المتدربة، تتبع شريحة المقدّم ونقراته ولا تتحكم في شيء
 const VIEW = new URLSearchParams(location.search).has('view');
 if (VIEW) document.body.classList.add('viewer');
+if (VIEW && new URLSearchParams(location.search).has('lite')) document.body.classList.add('lite');   // تشخيص مؤقت من بوابة الحضور
 
 /* ========== التاريخ الميلادي والهجري من المتصفح ========== */
 (function(){
