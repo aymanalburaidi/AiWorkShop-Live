@@ -652,46 +652,42 @@ function setWatch(on){
   keepAwake(); applyTheater();
 }
 $('#stageToggle').onclick = () => setWatch(!watching);
-// وضع المسرح: تلقائي في الجوال أفقيًا، ويدوي بزر "ملء الشاشة" في الشاشات الأكبر
-const landPhone = matchMedia('(orientation:landscape) and (max-height:560px)');
-const portraitPhone = matchMedia('(orientation:portrait) and (max-width:699px)');
+// وضع المسرح: بزر "ملء الشاشة" فقط، ويُغلق بزر X. لا مراقبة لدوران الجهاز: الدخول التلقائي بالوضع الأفقي
+// أبقى شريط Safari ظاهرًا، وتدوير الجهاز أثناء العرض أسقط Safari في التجربة
 const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
 const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 document.body.classList.toggle('ios', isIOS);
 document.body.classList.toggle('can-fs', !!(document.fullscreenEnabled || document.webkitFullscreenEnabled));
-let theaterBtn = false, theaterOff = false;   // theaterOff: خرجت من الأفقي التلقائي بزر X، حتى تعيد الجهاز عموديًا
+// جوال عمودي لحظة الدخول: يُدار العرض 90° بدل أن يصغر (يُحسب عند الدخول فقط)
+const phonePortrait = () => innerHeight > innerWidth && innerWidth < 700;
+let theaterBtn = false, rotOn = false;
 function applyTheater(){
-  const b = document.body.classList, on = watching && !theaterOff && (landPhone.matches || theaterBtn);
+  const b = document.body.classList, on = watching && theaterBtn;
   b.toggle('theater', on);
   b.toggle('manual', theaterBtn);
-  // جوال عمودي: يدور العرض بدل أن يصغر. إلا على iPhone: تدوير الجهاز وهو مدار بالـ CSS أسقط Safari في التجربة
-  b.toggle('rot', on && theaterBtn && portraitPhone.matches && !isIOS);
+  b.toggle('rot', on && rotOn);
   b.toggle('is-fs', !!fsEl());
   fit();
-  if (on && isIOS && !b.contains('rot') && !store.get('ios_tip', false)) { store.set('ios_tip', true); tip(D.t.ios_tip); }
+  if (on && isIOS && !rotOn && !store.get('ios_tip', false)) { store.set('ios_tip', true); tip(D.t.ios_tip); }
 }
 function tip(text){
   const t = document.createElement('div'); t.className = 'ios-tip'; t.textContent = text;
   document.body.append(t); setTimeout(() => t.remove(), 5200);
 }
-landPhone.addEventListener?.('change', () => { if (!landPhone.matches) theaterOff = false; applyTheater(); });
-portraitPhone.addEventListener?.('change', applyTheater);
 function enterFull(){
-  theaterOff = false;
-  // iPhone عموديًا: لا ملء شاشة حقيقي في Safari، والتدوير الطبيعي يفتح العرض بملء الشاشة
-  if (isIOS && portraitPhone.matches) { tip(D.t.rotate_tip); return; }
-  theaterBtn = true; applyTheater();
+  theaterBtn = true; rotOn = phonePortrait(); applyTheater();
   const d = document.documentElement;
   try {
+    // حيث يوجد ملء شاشة حقيقي (أندرويد): يُقفل الاتجاه أفقيًا، ثم يُعاد حساب التدوير مرة واحدة
     const r = (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d);
-    r?.then?.(() => { applyTheater(); return screen.orientation?.lock?.('landscape'); })?.catch?.(() => {});
+    const settle = () => setTimeout(() => { rotOn = phonePortrait(); applyTheater(); }, 300);
+    r?.then?.(() => screen.orientation?.lock?.('landscape'))?.then?.(settle, settle);
   } catch (e) {}
 }
 $('#stageFull').onclick = enterFull;
 $('#theaterFs').onclick = enterFull;
 function exitTheater(){
-  if (!theaterBtn && landPhone.matches) theaterOff = true;   // الأفقي التلقائي: يبقى مغلقًا حتى يعود الجهاز عموديًا
-  theaterBtn = false; applyTheater();
+  theaterBtn = false; rotOn = false; applyTheater();
   if (fsEl()) try { (document.exitFullscreen || document.webkitExitFullscreen).call(document)?.catch?.(() => {}); } catch (e) {}
 }
 $('#theaterX').onclick = exitTheater;
