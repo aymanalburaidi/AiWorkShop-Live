@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0f2f3e">
+<title>{{live-test.page_title|text}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f2f3e; --panel:#15445a; --ink:#EAF3F4; --muted:#9DB7C0; --line:rgba(255,255,255,.12);
+  --green:#07a869; --teal:#0da9a6; --blue:#3d7eb9; --sand:#c1b489; --red:#e06a5e;
+  --grad:linear-gradient(115deg,#07a869 0%,#0da9a6 50%,#3d7eb9 100%);
+  --ease:cubic-bezier(.165,.84,.44,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Tajawal',system-ui,sans-serif;font-weight:400;font-size:17px;line-height:1.7;background:var(--bg);color:var(--ink);
+  padding:calc(env(safe-area-inset-top) + 14px) calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 20px) calc(env(safe-area-inset-left) + 16px)}
+h1,h2,h3,b,button{font-weight:500}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+[hidden]{display:none!important}
+.wrap{max-width:640px;margin:0 auto;display:grid;gap:14px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.top h1{font-size:1.3rem}
+.st{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted)}
+.st i{width:10px;height:10px;border-radius:50%;background:#6d8793}
+.st.on i{background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.2)}
+.st.wait i{background:var(--sand);animation:pulse 1s infinite}
+.st.off i{background:var(--red)}
+@keyframes pulse{50%{opacity:.3}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;gap:12px}
+.card h2{font-size:1.05rem;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h2 small{font-size:.8rem;color:var(--sand);font-weight:400}
+.hint{color:var(--muted);font-size:.92rem}
+input[type=text],input[type=password]{width:100%;font-family:inherit;font-size:17px;color:var(--ink);background:rgba(255,255,255,.06);border:1.5px solid var(--line);border-radius:14px;padding:11px 14px;outline:none}
+input:focus{border-color:var(--teal)}
+fieldset{border:0;display:grid;gap:8px}
+legend{font-size:.88rem;color:var(--muted);margin-bottom:6px}
+.opt{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer}
+.opt input{width:20px;height:20px;accent-color:var(--teal)}
+.opt:has(input:checked){border-color:var(--teal);background:rgba(13,169,166,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 20px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);font-size:1rem;transition:transform .12s var(--ease),opacity .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--grad);border:0;color:#fff}
+.btn.warn{background:var(--sand);border:0;color:#0f2f3e}
+.btn.full{width:100%}
+.btn:disabled{opacity:.35;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.meter{display:grid;gap:6px;font-size:.92rem;color:var(--muted)}
+.bar{height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar span{display:block;height:100%;width:0;background:var(--grad);transition:width .2s linear}
+.verdict{border:1px solid var(--sand);border-radius:14px;padding:12px;display:grid;gap:10px}
+.verdict p b{direction:ltr;unicode-bidi:isolate}
+.err{color:var(--red);font-size:.9rem}
+.people{list-style:none;display:grid;gap:6px;font-size:.9rem}
+.people li{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.04)}
+.people small{color:var(--muted);direction:ltr}
+.log{list-style:none;display:grid;gap:2px;max-height:45dvh;overflow:auto;font-size:.8rem;direction:ltr;text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace}
+.log li{color:var(--muted);white-space:pre-wrap;word-break:break-word}
+.log li b{color:var(--ink);font-weight:500}
+.log li.bad b{color:var(--red)} .log li.good b{color:#86efac}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <h1>{{live-test.intro_title|text}}</h1>
+    <span class="st" id="st"><i></i><span id="stText">{{live-test.st_idle|text}}</span></span>
+  </header>
+
+  <section class="card" id="listener">
+    <p class="hint">{{live-test.intro_hint|text}}</p>
+    <input type="text" id="label" maxlength="40" autocomplete="off" placeholder="{{live-test.label_placeholder|text}}">
+    <fieldset>
+      <legend>{{live-test.variant_label|text}}</legend>
+      <label class="opt"><input type="radio" name="variant" value="plain" checked><span>{{live-test.variant_plain|text}}</span></label>
+      <label class="opt"><input type="radio" name="variant" value="session"><span>{{live-test.variant_session|text}}</span></label>
+    </fieldset>
+    <button class="btn primary full" id="listenBtn">{{live-test.listen|text}}</button>
+    <button class="btn warn full" id="tapBtn" hidden>{{live-test.tap_audio|text}}</button>
+    <div class="meter"><span id="audioText">{{live-test.audio_off|text}}</span><div class="bar"><span id="lvl"></span></div></div>
+    <div class="verdict" id="verdict" hidden>
+      <p>{{live-test.verdict_q|text}} <b id="gap"></b></p>
+      <div class="row"><button class="btn" data-v="yes">{{live-test.verdict_yes|text}}</button><button class="btn" data-v="no">{{live-test.verdict_no|text}}</button></div>
+    </div>
+  </section>
+
+  <section class="card" id="presenter" hidden>
+    <h2>{{live-test.presenter_title|text}}</h2>
+    <form id="lockForm" class="card" style="padding:0;border:0">
+      <input type="password" id="pw" autocomplete="current-password" placeholder="{{live-test.password_placeholder|text}}">
+      <button class="btn primary full" id="unlockBtn">{{live-test.unlock|text}}</button>
+      <p class="err" id="err" hidden>{{live-test.wrong|text}}</p>
+    </form>
+    <div id="pub" class="card" style="padding:0;border:0" hidden>
+      <fieldset>
+        <legend>{{live-test.source_label|text}}</legend>
+        <label class="opt"><input type="radio" name="source" value="mic" checked><span>{{live-test.source_mic|text}}</span></label>
+        <label class="opt"><input type="radio" name="source" value="tone"><span>{{live-test.source_tone|text}}</span></label>
+      </fieldset>
+      <button class="btn primary full" id="pubBtn">{{live-test.publish|text}}</button>
+      <h2>{{live-test.listeners|text}} <b id="lCount">0</b></h2>
+      <ul class="people" id="lList"></ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>{{live-test.log_title|text}} <small id="pending"></small></h2>
+    <ol class="log" id="log"></ol>
+  </section>
+  <audio id="aud" playsinline autoplay></audio>
+</main>
+<script src="{{cfg.livekitJs}}"></script>
+<script>
+const D = {{DATA}};
+const LK = window.LivekitClient, E = LK.RoomEvent;
+const $ = s => document.querySelector(s);
+const aud = $('#aud');
+const store = {
+  get(k, d){ try { const v = localStorage.getItem('aiws_live_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v){ try { localStorage.setItem('aiws_live_' + k, JSON.stringify(v)); } catch (e) {} },
+};
+const DEV = store.get('dev', null) || (() => { const d = Math.random().toString(36).slice(2, 12).padEnd(8, '0'); store.set('dev', d); return d; })();
+const PRESENTER = new URLSearchParams(location.search).has('p');
+const role = PRESENTER ? 'presenter' : 'listener';
+let variant = store.get('variant', 'plain');
+let room = null, want = false, key = null, rejoinT = null, tries = 0;
+
+/* ---------- السجل: يُعرض ويُرسل إلى aiws_live_probe (ويبقى في الجهاز حتى يُرسل) ---------- */
+const queue = store.get('q', []);
+let flushing = false;
+const hhmmss = d => d.toTimeString().slice(0, 8);
+function log(ev, detail, cls){
+  const row = { room: D.room, device: DEV, role, label: $('#label').value.trim().slice(0, 40) || null, variant: PRESENTER ? null : variant,
+    ev, t_client: new Date().toISOString(), detail: detail || null, ua: navigator.userAgent.slice(0, 400) };
+  queue.push(row); if (queue.length > 500) queue.splice(0, queue.length - 500);
+  store.set('q', queue);
+  const li = document.createElement('li');
+  if (cls) li.className = cls;
+  li.innerHTML = `${hhmmss(new Date())} <b></b> `;
+  li.querySelector('b').textContent = ev;
+  li.append(detail ? JSON.stringify(detail) : '');
+  $('#log').prepend(li);
+  while ($('#log').children.length > 200) $('#log').lastChild.remove();
+  flush();
+}
+async function flush(){
+  if (flushing || !queue.length) return pend();
+  flushing = true;
+  const batch = queue.slice(0, 50);
+  try {
+    const r = await fetch(D.url + '/rest/v1/aiws_live_probe', { method: 'POST', keepalive: true,
+      headers: { apikey: D.key, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(batch) });
+    if (r.ok) { queue.splice(0, batch.length); store.set('q', queue); }
+  } catch (e) {}
+  flushing = false; pend();
+}
+function pend(){ $('#pending').textContent = queue.length ? `${D.t.pending}: ${queue.length}` : ''; }
+setInterval(flush, 5000);
+
+/* ---------- الحالة ---------- */
+function status(s){
+  const map = { idle: ['', D.t.st_idle], connecting: ['wait', D.t.st_connecting], connected: ['on', D.t.st_connected],
+    reconnecting: ['wait', D.t.st_reconnecting], disconnected: ['off', D.t.st_disconnected] };
+  const [c, t] = map[s] || map.idle;
+  $('#st').className = 'st ' + c; $('#stText').textContent = t;
+}
+function audioUi(){
+  if (PRESENTER || !room) return;
+  const blocked = !room.canPlaybackAudio;
+  $('#tapBtn').hidden = !blocked;
+  const p = room.remoteParticipants.get('presenter');
+  const has = !!(p && [...p.audioTrackPublications.values()].some(x => x.track));
+  $('#audioText').textContent = blocked ? D.t.audio_blocked : has ? D.t.audio_on : D.t.audio_off;
+}
+setInterval(() => {
+  const p = room && room.remoteParticipants.get('presenter');
+  $('#lvl').style.width = Math.min(100, Math.round((p ? p.audioLevel : 0) * 250)) + '%';
+}, 250);
+
+/* ---------- الاتصال ---------- */
+async function getToken(){
+  const r = await fetch(D.fn, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: D.key },
+    body: JSON.stringify({ room: D.room, role, key: PRESENTER ? key : undefined, id: DEV, name: $('#label').value.trim() || (PRESENTER ? 'presenter' : '') }) });
+  if (!r.ok) throw Object.assign(new Error('token ' + r.status), { status: r.status });
+  return r.json();
+}
+function bind(r){
+  r.on(E.ConnectionStateChanged, s => { status(s); log('state', { s }); })
+   .on(E.SignalReconnecting, () => log('signal_reconnecting', null, 'bad'))
+   .on(E.Reconnecting, () => log('reconnecting', null, 'bad'))
+   .on(E.Reconnected, () => log('reconnected', null, 'good'))
+   .on(E.Disconnected, reason => {
+     log('disconnected', { reason, name: LK.DisconnectReason?.[reason] }, 'bad');
+     audioUi();
+     if (want && r === room) { clearTimeout(rejoinT); rejoinT = setTimeout(join, Math.min(10000, 2000 * ++tries)); }
+   })
+   .on(E.AudioPlaybackStatusChanged, () => { log('playback', { can: r.canPlaybackAudio }, r.canPlaybackAudio ? 'good' : 'bad'); audioUi(); })
+   .on(E.TrackSubscribed, (track, pub, p) => {
+     if (track.kind !== 'audio') return;
+     track.attach(aud);
+     log('track_on', { from: p.identity }, 'good'); audioUi(); session();
+   })
+   .on(E.TrackUnsubscribed, (track, pub, p) => { track.detach(aud); log('track_off', { from: p.identity }, 'bad'); audioUi(); })
+   .on(E.TrackMuted, (pub, p) => log('muted', { who: p.identity }))
+   .on(E.TrackUnmuted, (pub, p) => log('unmuted', { who: p.identity }))
+   .on(E.ParticipantConnected, p => { log('joined', { who: p.identity, name: p.name }); people(); })
+   .on(E.ParticipantDisconnected, p => { log('left', { who: p.identity, name: p.name }); people(); })
+   .on(E.ConnectionQualityChanged, (q, p) => { if (p.isLocal) log('quality', { q }); people(); })
+   .on(E.MediaDevicesError, e => log('media_error', { e: e.name }, 'bad'));
+}
+async function join(){
+  clearTimeout(rejoinT);
+  if (!want) return;
+  const old = room;
+  room = new LK.Room({ webAudioMix: false, disconnectOnPageLeave: false, adaptiveStream: false, dynacast: false });
+  bind(room);
+  if (old) old.disconnect().catch(() => {});
+  status('connecting');
+  try {
+    const t = await getToken();
+    if (!want) return;
+    await room.connect(t.url, t.token, { autoSubscribe: true });
+    tries = 0;
+    log('connected', { id: t.identity, n: room.remoteParticipants.size }, 'good');
+    if (!PRESENTER) { await room.startAudio().catch(() => {}); audioUi(); }
+    people();
+  } catch (e) {
+    log('join_fail', { e: String(e.message || e).slice(0, 120) }, 'bad');
+    if (e.status === 403) { want = false; status('idle'); return locked(true); }
+    status('disconnected');
+    if (want) rejoinT = setTimeout(join, Math.min(10000, 2000 * ++tries));
+  }
+}
+async function leave(){
+  want = false; clearTimeout(rejoinT);
+  if (room) await room.disconnect().catch(() => {});
+  room = null; status('idle'); log('stop'); session();
+}
+
+/* ---------- المستمع ---------- */
+$('#label').value = store.get('label', '');
+$('#label').onchange = () => store.set('label', $('#label').value.trim());
+document.querySelectorAll('input[name=variant]').forEach(x => {
+  x.checked = x.value === variant;
+  x.onchange = () => { variant = x.value; store.set('variant', variant); log('variant', { v: variant }); session(); };
+});
+$('#listenBtn').onclick = async () => {
+  if (want) { $('#listenBtn').textContent = D.t.listen; return leave(); }
+  want = true; $('#listenBtn').textContent = D.t.stop;
+  aud.play().catch(() => {});   // داخل اللمسة نفسها: يفتح عنصر الصوت قبل وصول المسار
+  log('listen_tap');
+  join();
+};
+$('#tapBtn').onclick = () => { log('audio_tap'); resume('tap'); };
+function resume(why){
+  aud.play().then(() => log('resume_ok', { why }, 'good')).catch(e => log('resume_fail', { why, e: e.name }, 'bad'));
+  if (room) room.startAudio().then(audioUi).catch(() => {});
+}
+['playing', 'pause', 'stalled', 'waiting', 'ended', 'emptied'].forEach(n => aud.addEventListener(n, () => log('el_' + n, null, n === 'playing' ? 'good' : n === 'pause' ? 'bad' : '')));
+
+// Media Session: بطاقة في شاشة القفل وزر تشغيل منها؛ ومع العودة للصفحة يُستأنف الصوت تلقائيًا
+function session(){
+  if (PRESENTER || !('mediaSession' in navigator)) return;
+  const ms = navigator.mediaSession, on = variant === 'session' && want;
+  try {
+    ms.metadata = on ? new MediaMetadata({ title: D.t.session_title, artist: D.t.session_artist }) : null;
+    ms.playbackState = on ? 'playing' : 'none';
+    ms.setActionHandler('play', on ? () => { log('ms_play'); resume('ms_play'); ms.playbackState = 'playing'; } : null);
+    ms.setActionHandler('pause', on ? () => { log('ms_pause'); aud.pause(); ms.playbackState = 'paused'; } : null);
+  } catch (e) { log('ms_error', { e: e.name }); }
+}
+
+/* ---------- الغياب والعودة: مدته، وحال الاتصال والصوت عند العودة ---------- */
+let hiddenAt = 0, lastGap = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { hiddenAt = Date.now(); log('hidden', { state: room?.state, paused: aud.paused }); flush(); return; }
+  const ms = hiddenAt ? Date.now() - hiddenAt : 0; hiddenAt = 0;
+  log('visible', { ms, max_gap: maxGap, state: room?.state, paused: aud.paused, can: room?.canPlaybackAudio }); maxGap = 0;
+  if (!PRESENTER && want && variant === 'session' && (aud.paused || !room?.canPlaybackAudio)) resume('visible');
+  if (!PRESENTER && want && ms > 5000) { lastGap = ms; $('#gap').textContent = Math.round(ms / 1000) + ' ' + D.t.sec; $('#verdict').hidden = false; }
+  audioUi(); flush();
+});
+document.querySelectorAll('#verdict [data-v]').forEach(b => b.onclick = () => {
+  log('verdict', { heard: b.dataset.v === 'yes', gap_ms: lastGap }, b.dataset.v === 'yes' ? 'good' : 'bad');
+  $('#verdict').hidden = true;
+});
+['pagehide', 'pageshow', 'online', 'offline'].forEach(n => addEventListener(n, e => {
+  log('page_' + n, n === 'pageshow' ? { persisted: e.persisted } : null);
+  if (n === 'online' && want && (!room || room.state === 'disconnected')) join();
+}));
+['freeze', 'resume'].forEach(n => document.addEventListener(n, () => log('page_' + n)));
+// توقف تنفيذ الصفحة: فجوة بين نبضات المؤقت تعني أن المتصفح جمّد JavaScript.
+// في الخلفية تُجمع أطول فجوة وتُرسل مع حدث visible بدل صف لكل فجوة
+let tick = Date.now(), maxGap = 0;
+setInterval(() => {
+  const n = Date.now(), g = n - tick; tick = n;
+  if (g <= 3000) return;
+  if (document.hidden) maxGap = Math.max(maxGap, g); else log('js_gap', { ms: g });
+}, 1000);
+
+/* ---------- المقدّم ---------- */
+let pubTrack = null, toneCtx = null;
+function locked(wrong){
+  $('#lockForm').hidden = false; $('#pub').hidden = true; $('#err').hidden = !wrong;
+  if (wrong) { try { localStorage.removeItem('aiws_key'); } catch (e) {} }
+}
+async function unlock(k){
+  const btn = $('#unlockBtn'); btn.disabled = true; btn.textContent = D.t.checking;
+  key = k; want = true;
+  await join();
+  btn.disabled = false; btn.textContent = D.t.unlock;
+  if (!want) return;
+  try { localStorage.setItem('aiws_key', k); } catch (e) {}
+  $('#lockForm').hidden = true; $('#pub').hidden = false;
+}
+$('#lockForm').onsubmit = e => { e.preventDefault(); $('#err').hidden = true; const v = $('#pw').value.trim(); if (v) unlock(v); };
+$('#pubBtn').onclick = async () => {
+  const lp = room && room.localParticipant;
+  if (!lp) return;
+  const btn = $('#pubBtn'); btn.disabled = true;
+  try {
+    if (pubTrack || lp.isMicrophoneEnabled) {
+      if (pubTrack) { await lp.unpublishTrack(pubTrack); pubTrack.stop(); pubTrack = null; }
+      else await lp.setMicrophoneEnabled(false);
+      if (toneCtx) { toneCtx.close(); toneCtx = null; }
+      btn.textContent = D.t.publish; log('unpublish');
+    } else if (document.querySelector('input[name=source]:checked').value === 'tone') {
+      // نغمة بلا مؤقتات: موجة 660Hz يفتحها ويغلقها مذبذب مربع بتردد 1Hz (نصف ثانية صوت، نصف صمت)
+      toneCtx = new AudioContext();
+      const osc = toneCtx.createOscillator(), g = toneCtx.createGain(), lfo = toneCtx.createOscillator(), depth = toneCtx.createGain(), dest = toneCtx.createMediaStreamDestination();
+      osc.frequency.value = 660; lfo.type = 'square'; lfo.frequency.value = 1; g.gain.value = .15; depth.gain.value = .15;
+      lfo.connect(depth).connect(g.gain); osc.connect(g).connect(dest); osc.start(); lfo.start();
+      pubTrack = dest.stream.getAudioTracks()[0];
+      await lp.publishTrack(pubTrack, { name: 'tone', source: LK.Track.Source.Microphone });
+      btn.textContent = D.t.unpublish; log('publish', { src: 'tone' }, 'good');
+    } else {
+      await lp.setMicrophoneEnabled(true, { echoCancellation: true, noiseSuppression: true, autoGainControl: true });
+      btn.textContent = D.t.unpublish; log('publish', { src: 'mic' }, 'good');
+    }
+  } catch (e) { log('publish_fail', { e: e.name || String(e) }, 'bad'); alert(D.t.mic_error); }
+  btn.disabled = false;
+};
+function people(){
+  if (!PRESENTER || !room) return;
+  const list = [...room.remoteParticipants.values()].filter(p => p.identity.startsWith('l-'));
+  $('#lCount').textContent = list.length;
+  $('#lList').innerHTML = list.length ? '' : `<li>${D.t.listeners_none}</li>`;
+  for (const p of list) {
+    const li = document.createElement('li');
+    li.innerHTML = '<span></span><small></small>';
+    li.firstChild.textContent = p.name || p.identity;
+    li.lastChild.textContent = p.connectionQuality;
+    $('#lList').append(li);
+  }
+}
+
+/* ---------- البدء ---------- */
+if (PRESENTER) {
+  $('#listener').hidden = true; $('#presenter').hidden = false;
+  const q = new URLSearchParams(location.search);
+  if (q.get('k')) { const k = q.get('k'); history.replaceState(null, '', location.pathname + '?p=1'); unlock(k); }
+  else { let saved = null; try { saved = localStorage.getItem('aiws_key'); } catch (e) {} if (saved) unlock(saved); }
+}
+log('open', { presenter: PRESENTER, ms: 'mediaSession' in navigator, standalone: !!navigator.standalone });
+</script>
+</body>
+</html>

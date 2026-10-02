@@ -186,8 +186,15 @@ const notesData = { url: cfg.supabaseUrl, key: cfg.supabaseKey, room: cfg.room, 
 fs.mkdirSync(path.join(out, 'notes'), { recursive: true });
 fs.writeFileSync(path.join(out, 'notes/index.html'), render(read('src/notes.html'), notesData));
 fs.writeFileSync(path.join(out, 'join/index.html'), render(read('src/join.html'), joinData));
+
+/* ---------- صفحة اختبار الصوت المباشر (تجربة جدوى LiveKit؛ التوكن من الدالة aiws_live_token) ---------- */
+const liveTestData = { url: cfg.supabaseUrl, key: cfg.supabaseKey, room: cfg.room, fn: cfg.supabaseUrl.replace(/\/$/, '') + '/functions/v1/aiws_live_token',
+  t: Object.fromEntries(Object.entries(C['live-test']).map(([k, v]) => [k, plain(v)])) };
+fs.mkdirSync(path.join(out, 'live-test'), { recursive: true });
+fs.writeFileSync(path.join(out, 'live-test/index.html'), render(read('src/live-test.html'), liveTestData));
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
 console.log('✓ تم البناء في docs/');
 console.log('  العرض:', cfg.siteUrl);
 console.log('  رابط المتدربات:', joinUrl);
 console.log('  ملاحظات المقدّم:', new URL('notes/', cfg.siteUrl).href, `(${slideList.length} شريحة، ${Math.round(at / 60)} دقيقة)`);
+console.log('  اختبار الصوت:', new URL('live-test/', cfg.siteUrl).href, '(المقدّم: ?p=1)');
