@@ -109,6 +109,15 @@ details.prompt .btn{margin:0 14px 14px;min-height:44px;font-size:.95rem;backgrou
 .stage-bar .stage-live{flex:1}
 .stage-bar button{border:0;background:#EEF4F4;color:var(--ink);border-radius:999px;padding:0 12px;min-height:32px;font-size:.8rem;font-family:inherit}
 body:not(.watch) .stage-live i{display:none}
+/* صوت المقدّم: شريط كبير حتى أول لمسة، وزر كتم في شريط العرض */
+.audio-go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;padding:8px 14px;border:0;background:var(--grad);color:#fff;font-size:1.05rem;line-height:1.4;animation:glow 1.8s ease-in-out infinite}
+.audio-go .icon{width:1.5em;height:1.5em}
+@keyframes glow{50%{filter:brightness(1.12)}}
+.stage-bar .audio-btn{display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff}
+.stage-bar .audio-btn.off{background:#EEF4F4;color:var(--ink)}
+.stage-bar .audio-btn.wait{background:#EEF4F4;color:var(--muted)}
+.stage-bar button{white-space:nowrap}
+@media (max-width:479px){.stage-bar .audio-btn span{display:none}.stage-bar .audio-btn{padding:0 10px}}
 /* رسالة المقدّم لكل الجوالات */
 .announce{border:2px solid var(--sand);background:#FFFDF6}
 .announce .ann-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -167,6 +176,7 @@ body.watch.theater #announce{position:fixed;z-index:47;top:8px;left:50%;transfor
 body.watch.theater .stage{position:fixed;inset:0;z-index:40;display:grid;place-items:center;border:0;border-radius:0;box-shadow:none;background:#0b2230}
 body.watch.theater .stage-box{width:min(var(--tw),calc(var(--th) * 16 / 9));border-radius:0}
 body.watch.theater .stage-bar{display:none}
+body.watch.theater .audio-go{position:fixed;z-index:49;top:calc(env(safe-area-inset-top) + 10px);left:50%;transform:translateX(-50%);width:auto;max-width:calc(var(--tw) * .7);border-radius:999px;padding:8px 22px}
 body.watch.theater #liveSlot{position:fixed;z-index:48;left:calc(env(safe-area-inset-left) + 66px);bottom:10px;width:min(340px,calc(var(--tw) * .44));max-height:calc(var(--th) - 20px);overflow:auto;scrollbar-width:none}
 body.watch.theater #liveSlot .card{padding:12px;background:rgba(255,255,255,.94)}
 /* الأسئلة والخيارات ظاهرة على الشريحة نفسها، فيكفي هنا أرقام الخيارات */
@@ -213,6 +223,7 @@ body:not(.watch) .stage-full{display:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.js" defer></script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -274,6 +285,8 @@ body:not(.watch) .stage-full{display:none!important}
     <symbol id="i-thumb-up" viewBox="0 0 24 24"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></symbol>
     <symbol id="i-thumb-down" viewBox="0 0 24 24"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></symbol>
     <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+    <symbol id="i-volume-x" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/></symbol>
   </defs>
 </svg>
 
@@ -283,10 +296,11 @@ body:not(.watch) .stage-full{display:none!important}
     <img class="yafea" src="../assets/yafea-logo.png" alt="يافع المستقبل">
   </header>
 
-  <!-- العرض المباشر: يتبع شريحة المقدّم ونقراته، والصوت من زوم -->
+  <!-- العرض المباشر: يتبع شريحة المقدّم ونقراته، وصوت المقدّم مباشر من LiveKit -->
   <section class="stage" id="stage">
+    <button type="button" class="audio-go" id="audioGo" hidden><svg class="icon"><use href="#i-volume"/></svg><span id="audioGoTxt">المس هنا لسماع المقدّم</span></button>
     <div class="stage-box" id="stageBox"><iframe id="stageFrame" title="العرض المباشر" tabindex="-1"></iframe></div>
-    <div class="stage-bar"><span class="stage-live"><i></i>العرض المباشر</span><button type="button" class="stage-full" id="stageFull"><svg class="icon"><use href="#i-max"/></svg>ملء الشاشة</button><button type="button" id="stageToggle"></button></div>
+    <div class="stage-bar"><span class="stage-live"><i></i>العرض المباشر</span><button type="button" class="audio-btn" id="audioBtn"><svg class="icon"><use href="#i-volume"/></svg><span id="audioBtnTxt"></span></button><button type="button" class="stage-full" id="stageFull"><svg class="icon"><use href="#i-max"/></svg>ملء الشاشة</button><button type="button" id="stageToggle"></button></div>
   </section>
 
   <div class="side">
@@ -378,9 +392,10 @@ body:not(.watch) .stage-full{display:none!important}
   </form>
 </div>
 <div class="toast" id="toast"></div>
+<audio id="aud" playsinline autoplay></audio>
 
 <script>
-const D = {"url":"https://dqedhfwaquqaddbtfvtx.supabase.co","key":"sb_publishable_zROcySsWThanD_me0Dq8dw_tGAHzGKk","room":"live-lab","joinUrl":"https://aymanalburaidi.github.io/AiWorkShop-Live/join/","bucket":"aiws-uploads","polls":{"p1":{"question":"ما المهمة التي تأخذ أكثر وقتك كل أسبوع؟","options":["تحضير الدروس وتخطيطها","إعداد الأسئلة والاختبارات","التصحيح وكتابة التغذية الراجعة","تكييف المحتوى لمستويات الطالبات"]},"p2":{"question":"ما أول استخدام للتجربة هذا الأسبوع؟","options":["تخطيط درس","إعداد اختبار قصير","كتابة تغذية راجعة","تبسيط نص لطالباتي"]}},"schools":[{"key":"p16","name":"الابتدائية السادسة عشر","color":"#7258a4"},{"key":"s7","name":"الثانوية السابعة","color":"#0a8f8c"},{"key":"vol","name":"مدرسة التعلم المبتكر","color":"#3d7eb9"}],"prompts":[{"title":"تخطيط درس","text":"أنت معلم [اسم المادة] خبير في [المرحلة: الابتدائية أو الثانوية]، أعدّ خطة درس لموضوع [اسم الموضوع] لطالبات [الصف]، مدة الحصة [45] دقيقة، تتضمّن: 3 أهداف قابلة للقياس، وتهيئة من واقع الطالبة، وخطوات الشرح، ونشاطًا تعاونيًا، وتقويمًا ختاميًا من 3 أسئلة، وواجبًا قصيرًا، واعرضها في جدول مع زمن كل مرحلة.","icon":"clipboard","g":"share"},{"title":"اختبار قصير","text":"أعدّ اختبارًا قصيرًا في موضوع [اسم الموضوع] لمادة [اسم المادة]، [الصف]، من [5] أسئلة اختيار من متعدد وسؤالين مقاليين قصيرين، بمستويات متدرجة (تذكّر، فهم، تطبيق، تفكير عليا)، واجعل البدائل الخاطئة من أخطاء الطالبات الشائعة، وأضف مفتاح الإجابة مع تعليل مختصر لكل إجابة.","icon":"chart","g":"share"},{"title":"تغذية راجعة","text":"هذه إجابة طالبة (دون اسمها) عن السؤال: [نص السؤال]، والإجابة: [إجابة الطالبة]، فاكتب لها تغذية راجعة في 3 أسطر: نقطة قوة، وخطأ واحد مع توضيحه، وخطوة عملية للتحسين، بلغة مشجعة تناسب طالبة [الصف].","icon":"msg","g":"share"},{"title":"تبسيط نص","text":"بسّط الفقرة الآتية لطالبة في [الصف] تجد صعوبة في مادة [اسم المادة]، مع الحفاظ على الدقة العلمية، واستخدم جملًا قصيرة ومثالًا من الحياة اليومية، ثم أضف سؤالين للتحقق من الفهم، وهذه هي الفقرة: [الصق النص هنا]","icon":"refresh","g":"share"},{"title":"صورة توضيحية لدرسك","text":"ارسم صورة توضيحية ملونة بأسلوب رسوم تعليمية مبسطة لطالبات [الصف]، تشرح مفهوم [اسم المفهوم] في مادة [اسم المادة]، وأضف عناصر بصرية تساعد على الفهم، واجعل الخلفية بسيطة، ولا تضع نصوصًا طويلة داخل الصورة.","icon":"image","g":"create"},{"title":"صفحة تفاعلية لطالباتك","text":"أنشئ صفحة ويب تفاعلية باللغة العربية (من اليمين إلى اليسار) لمراجعة درس [اسم الدرس] في مادة [اسم المادة] لطالبات [الصف]، تحتوي على [8] بطاقات تنقلب عند الضغط لتظهر الإجابة، واختبار قصير من [5] أسئلة يعرض الدرجة في النهاية، واجعل التصميم بألوان هادئة ومناسبًا للجوال.","icon":"layout","g":"create"}],"t":{"page_title":"بوابة الحضور","name_title":"أهلًا بك في ورشة العمل","name_text":"الاسم الثلاثي والمدرسة مرة واحدة فقط ويحفظهما الجهاز، ويظهران مع المشاركات على الشاشة.","name_placeholder":"مثال: نورة عبدالله الشمري","name_error":"الاسم الثلاثي كاملًا مطلوب (ثلاث كلمات على الأقل).","school_label":"المدرسة","school_error":"اختيار المدرسة مطلوب.","name_button":"دخول","hello":"مرحبًا","change_name":"تعديل","welcome_title":"الصفحة مفتوحة طوال ورشة العمل","welcome_text":"عندما يبدأ التصويت أو نشاط جديد يظهر هنا تلقائيًا.","poll_now":"تصويت الآن","poll_done":"سجّلنا صوتك، والنتيجة على الشاشة الآن.","share_title":"مشاركة جديدة","share_hint":"الأمر المجرَّب أو النتيجة كاملة مهما طالت، وتظهر المشاركة على الشاشة أمام الجميع.","create_title":"تحدّي الإبداع: رفع العمل","create_hint":"صورة من صنعك أو رابط صفحتك، مع وصف قصير.","share_placeholder":"النص أو الرابط هنا","attach_image":"إرفاق صورة","remove_image":"حذف الصورة","share_button":"إرسال","sending":"جارٍ الإرسال","stage_title":"العرض المباشر","stage_full":"ملء الشاشة","stage_exit":"الخروج من ملء الشاشة","slot_close":"إغلاق","ios_tip":"سحب الشاشة إلى أعلى يخفي شريط المتصفح","stage_hide":"إخفاء","stage_show":"إظهار العرض","announce_title":"رسالة من المقدّم","announce_new":"رسالة جديدة من المقدّم","announce_close":"إغلاق","ask_button":"سؤال","ask_title":"سؤال أو رسالة إلى المقدّم","ask_hint":"تصل إلى المقدّم وحده، ولا تظهر على الشاشة إلا إذا اختار عرضها أثناء الإجابة، ومعها الاسم.","ask_placeholder":"نص السؤال أو الرسالة","ask_send":"إرسال","ask_cancel":"إلغاء","ask_sent":"وصلت رسالتك إلى المقدّم.","react_label":"تفاعل سريع مع مقدّم ورشة العمل","react_up":"تأييد","react_down":"اعتراض","hand_raise":"رفع اليد","hand_lower":"إنزال اليد","hand_up_toast":"اليد مرفوعة، والاسم ظاهر على الشاشة.","hand_down_toast":"أُنزلت اليد.","share_sent":"وصلت مشاركتك، وتظهر الآن على الشاشة.","share_privacy":"بدون أسماء الطالبات أو بياناتهن.","sent_title":"مشاركاتك","prompts_title":"الأوامر الجاهزة","contact_title":"الصفحات الاجتماعية للمدرب","contact_button":"حسابات التواصل","error_rate":"مشاركات متتالية كثيرة، والإرسال متاح مجددًا بعد دقيقة.","error_net":"تعذّر الإرسال بسبب ضعف الاتصال بالإنترنت، والمحاولة ممكنة بعد لحظات.","error_image":"تعذّر رفع الصورة، والمحاولة ممكنة بصورة أخرى.","offline":"الاتصال ضعيف، نعيد المحاولة تلقائيًا","online":"متصل بالعرض","word_title":"بكلمة واحدة","word_question":"ما أول كلمة تخطر ببالك عند سماع \"الذكاء الاصطناعي في التعليم\"؟","word_placeholder":"كلمة أو كلمتان","word_button":"إرسال","word_sent":"وصلت الكلمة، ويمكن إرسال كلمة أخرى."},"copy":"نسخ","copied":"تم"};
+const D = {"url":"https://dqedhfwaquqaddbtfvtx.supabase.co","key":"sb_publishable_zROcySsWThanD_me0Dq8dw_tGAHzGKk","room":"live-lab","joinUrl":"https://aymanalburaidi.github.io/AiWorkShop-Live/join/","bucket":"aiws-uploads","polls":{"p1":{"question":"ما المهمة التي تأخذ أكثر وقتك كل أسبوع؟","options":["تحضير الدروس وتخطيطها","إعداد الأسئلة والاختبارات","التصحيح وكتابة التغذية الراجعة","تكييف المحتوى لمستويات الطالبات"]},"p2":{"question":"ما أول استخدام للتجربة هذا الأسبوع؟","options":["تخطيط درس","إعداد اختبار قصير","كتابة تغذية راجعة","تبسيط نص لطالباتي"]}},"schools":[{"key":"p16","name":"الابتدائية السادسة عشر","color":"#7258a4"},{"key":"s7","name":"الثانوية السابعة","color":"#0a8f8c"},{"key":"vol","name":"مدرسة التعلم المبتكر","color":"#3d7eb9"}],"fn":"https://dqedhfwaquqaddbtfvtx.supabase.co/functions/v1/aiws_live_token","prompts":[{"title":"تخطيط درس","text":"أنت معلم [اسم المادة] خبير في [المرحلة: الابتدائية أو الثانوية]، أعدّ خطة درس لموضوع [اسم الموضوع] لطالبات [الصف]، مدة الحصة [45] دقيقة، تتضمّن: 3 أهداف قابلة للقياس، وتهيئة من واقع الطالبة، وخطوات الشرح، ونشاطًا تعاونيًا، وتقويمًا ختاميًا من 3 أسئلة، وواجبًا قصيرًا، واعرضها في جدول مع زمن كل مرحلة.","icon":"clipboard","g":"share"},{"title":"اختبار قصير","text":"أعدّ اختبارًا قصيرًا في موضوع [اسم الموضوع] لمادة [اسم المادة]، [الصف]، من [5] أسئلة اختيار من متعدد وسؤالين مقاليين قصيرين، بمستويات متدرجة (تذكّر، فهم، تطبيق، تفكير عليا)، واجعل البدائل الخاطئة من أخطاء الطالبات الشائعة، وأضف مفتاح الإجابة مع تعليل مختصر لكل إجابة.","icon":"chart","g":"share"},{"title":"تغذية راجعة","text":"هذه إجابة طالبة (دون اسمها) عن السؤال: [نص السؤال]، والإجابة: [إجابة الطالبة]، فاكتب لها تغذية راجعة في 3 أسطر: نقطة قوة، وخطأ واحد مع توضيحه، وخطوة عملية للتحسين، بلغة مشجعة تناسب طالبة [الصف].","icon":"msg","g":"share"},{"title":"تبسيط نص","text":"بسّط الفقرة الآتية لطالبة في [الصف] تجد صعوبة في مادة [اسم المادة]، مع الحفاظ على الدقة العلمية، واستخدم جملًا قصيرة ومثالًا من الحياة اليومية، ثم أضف سؤالين للتحقق من الفهم، وهذه هي الفقرة: [الصق النص هنا]","icon":"refresh","g":"share"},{"title":"صورة توضيحية لدرسك","text":"ارسم صورة توضيحية ملونة بأسلوب رسوم تعليمية مبسطة لطالبات [الصف]، تشرح مفهوم [اسم المفهوم] في مادة [اسم المادة]، وأضف عناصر بصرية تساعد على الفهم، واجعل الخلفية بسيطة، ولا تضع نصوصًا طويلة داخل الصورة.","icon":"image","g":"create"},{"title":"صفحة تفاعلية لطالباتك","text":"أنشئ صفحة ويب تفاعلية باللغة العربية (من اليمين إلى اليسار) لمراجعة درس [اسم الدرس] في مادة [اسم المادة] لطالبات [الصف]، تحتوي على [8] بطاقات تنقلب عند الضغط لتظهر الإجابة، واختبار قصير من [5] أسئلة يعرض الدرجة في النهاية، واجعل التصميم بألوان هادئة ومناسبًا للجوال.","icon":"layout","g":"create"}],"t":{"page_title":"بوابة الحضور","name_title":"أهلًا بك في ورشة العمل","name_text":"الاسم الثلاثي والمدرسة مرة واحدة فقط ويحفظهما الجهاز، ويظهران مع المشاركات على الشاشة.","name_placeholder":"مثال: نورة عبدالله الشمري","name_error":"الاسم الثلاثي كاملًا مطلوب (ثلاث كلمات على الأقل).","school_label":"المدرسة","school_error":"اختيار المدرسة مطلوب.","name_button":"دخول","hello":"مرحبًا","change_name":"تعديل","welcome_title":"الصفحة مفتوحة طوال ورشة العمل","welcome_text":"عندما يبدأ التصويت أو نشاط جديد يظهر هنا تلقائيًا.","poll_now":"تصويت الآن","poll_done":"سجّلنا صوتك، والنتيجة على الشاشة الآن.","share_title":"مشاركة جديدة","share_hint":"الأمر المجرَّب أو النتيجة كاملة مهما طالت، وتظهر المشاركة على الشاشة أمام الجميع.","create_title":"تحدّي الإبداع: رفع العمل","create_hint":"صورة من صنعك أو رابط صفحتك، مع وصف قصير.","share_placeholder":"النص أو الرابط هنا","attach_image":"إرفاق صورة","remove_image":"حذف الصورة","share_button":"إرسال","sending":"جارٍ الإرسال","stage_title":"العرض المباشر","stage_full":"ملء الشاشة","stage_exit":"الخروج من ملء الشاشة","slot_close":"إغلاق","ios_tip":"سحب الشاشة إلى أعلى يخفي شريط المتصفح","stage_hide":"إخفاء","stage_show":"إظهار العرض","announce_title":"رسالة من المقدّم","announce_new":"رسالة جديدة من المقدّم","announce_close":"إغلاق","ask_button":"سؤال","ask_title":"سؤال أو رسالة إلى المقدّم","ask_hint":"تصل إلى المقدّم وحده، ولا تظهر على الشاشة إلا إذا اختار عرضها أثناء الإجابة، ومعها الاسم.","ask_placeholder":"نص السؤال أو الرسالة","ask_send":"إرسال","ask_cancel":"إلغاء","ask_sent":"وصلت رسالتك إلى المقدّم.","react_label":"تفاعل سريع مع مقدّم ورشة العمل","react_up":"تأييد","react_down":"اعتراض","hand_raise":"رفع اليد","hand_lower":"إنزال اليد","hand_up_toast":"اليد مرفوعة، والاسم ظاهر على الشاشة.","hand_down_toast":"أُنزلت اليد.","share_sent":"وصلت مشاركتك، وتظهر الآن على الشاشة.","share_privacy":"بدون أسماء الطالبات أو بياناتهن.","sent_title":"مشاركاتك","prompts_title":"الأوامر الجاهزة","contact_title":"الصفحات الاجتماعية للمدرب","contact_button":"حسابات التواصل","error_rate":"مشاركات متتالية كثيرة، والإرسال متاح مجددًا بعد دقيقة.","error_net":"تعذّر الإرسال بسبب ضعف الاتصال بالإنترنت، والمحاولة ممكنة بعد لحظات.","error_image":"تعذّر رفع الصورة، والمحاولة ممكنة بصورة أخرى.","offline":"الاتصال ضعيف، نعيد المحاولة تلقائيًا","online":"متصل بالعرض","audio_go":"المس هنا لسماع المقدّم","audio_other":"الصوت يعمل في نافذة أخرى. المس هنا لسماعه في هذه النافذة.","audio_mute":"كتم الصوت","audio_unmute":"تشغيل الصوت","audio_wait":"بانتظار صوت المقدّم","audio_session_title":"ورشة العمل: بث مباشر","word_title":"بكلمة واحدة","word_question":"ما أول كلمة تخطر ببالك عند سماع \"الذكاء الاصطناعي في التعليم\"؟","word_placeholder":"كلمة أو كلمتان","word_button":"إرسال","word_sent":"وصلت الكلمة، ويمكن إرسال كلمة أخرى."},"copy":"نسخ","copied":"تم"};
 const $ = s => document.querySelector(s);
 const ico = id => `<svg class="icon"><use href="#${id}"/></svg>`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -428,6 +443,7 @@ $('#nameForm').onsubmit = e => {
   school = pickedSchool; store.set('school', school);
   $('#sheet').hidden = true; $('#nameInput').blur();
   showName(); register();
+  if (wantAudio) audioStart('enter');   // لمسة "دخول" هي اللمسة التي يشترطها المتصفح لتشغيل الصوت
 };
 async function register(){
   if (!sb || !name) return;
@@ -714,6 +730,146 @@ document.addEventListener('visibilitychange', keepAwake);
 document.addEventListener('pointerdown', keepAwake, { passive: true });
 setWatch(watching);
 
+/* ---------- صوت المقدّم المباشر (LiveKit) ---------- */
+// لمسة "دخول" تشغّله، ومن عادت باسم محفوظ تلمس الشريط فوق العرض (المتصفح يشترط لمسة).
+// يُسمع من عنصر <audio> واحد (webAudioMix: false) لأن استمرار الصوت في الخلفية على iOS يعتمد عليه.
+// التوكن من الدالة aiws_live_token (استماع فقط)، والمقدّم يبث من live-test/?p=1 حتى المرحلة 1.
+const aud = $('#aud');
+const PDEV = device.replace(/-/g, '').toLowerCase().slice(0, 24);
+let lk = null, wantAudio = store.get('audio', true), audioOther = false, curTrack = null, interrupted = false, userPaused = false, lkTries = 0, lkT = null;
+
+// سجل التجربة (aiws_live_probe): أحداث الصوت والغياب وقنوات Supabase، بلا أسماء (المدرسة فقط)
+const pq = store.get('probe_q', []);
+let pBusy = false;
+function plog(ev, detail){
+  pq.push({ room: D.room, device: PDEV, role: 'listener', label: school || null, variant: 'session', ev, t_client: new Date().toISOString(), detail: detail || null, ua: navigator.userAgent.slice(0, 400) });
+  if (pq.length > 300) pq.splice(0, pq.length - 300);
+  store.set('probe_q', pq); probeFlush();
+}
+async function probeFlush(){
+  if (pBusy || !pq.length) return;
+  pBusy = true;
+  const batch = pq.slice(0, 50);
+  try {
+    const r = await fetch(D.url + '/rest/v1/aiws_live_probe', { method: 'POST', keepalive: true,
+      headers: { apikey: D.key, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(batch) });
+    if (r.ok) { pq.splice(0, batch.length); store.set('probe_q', pq); }
+  } catch (e) {}
+  pBusy = false;
+}
+setInterval(probeFlush, 5000);
+
+function audioUi(){
+  const can = !!(lk && lk.canPlaybackAudio);
+  const p = lk && lk.remoteParticipants.get('presenter');
+  const has = !!(p && [...p.audioTrackPublications.values()].some(x => x.track));
+  $('#audioGo').hidden = !(name && wantAudio && !can);
+  $('#audioGoTxt').textContent = audioOther ? D.t.audio_other : D.t.audio_go;
+  const btn = $('#audioBtn');
+  btn.className = 'audio-btn' + (!wantAudio ? ' off' : has ? '' : ' wait');
+  btn.querySelector('use').setAttribute('href', wantAudio ? '#i-volume' : '#i-volume-x');
+  $('#audioBtnTxt').textContent = !wantAudio ? D.t.audio_unmute : has ? D.t.audio_mute : D.t.audio_wait;
+  btn.setAttribute('aria-label', $('#audioBtnTxt').textContent); btn.title = $('#audioBtnTxt').textContent;
+}
+async function lkToken(){
+  const r = await fetch(D.fn, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: D.key },
+    body: JSON.stringify({ room: D.room, role: 'listener', id: PDEV, name }) });
+  if (!r.ok) throw new Error('token ' + r.status);
+  return r.json();
+}
+function lkBind(r){
+  const E = LivekitClient.RoomEvent;
+  r.on(E.SignalReconnecting, () => plog('signal_reconnecting'))
+   .on(E.Reconnecting, () => plog('reconnecting'))
+   .on(E.Reconnected, () => { plog('reconnected'); audioUi(); })
+   .on(E.Disconnected, reason => {
+     plog('disconnected', { reason, name: LivekitClient.DisconnectReason?.[reason] });
+     if (r !== lk) return;
+     // نافذة أخرى بالجهاز نفسه أخذت الصوت: لا عودة تلقائية، وإلا تطرد النافذتان بعضهما بلا نهاية
+     if (reason === LivekitClient.DisconnectReason.DUPLICATE_IDENTITY) { lk = null; audioOther = true; session(); audioUi(); return; }
+     if (wantAudio) { clearTimeout(lkT); lkT = setTimeout(lkJoin, Math.min(10000, 2000 * ++lkTries)); }
+     audioUi();
+   })
+   .on(E.AudioPlaybackStatusChanged, () => { plog('playback', { can: r.canPlaybackAudio }); audioUi(); })
+   .on(E.TrackSubscribed, (track, pub, p) => {
+     if (track.kind !== 'audio') return;
+     curTrack = track; track.attach(aud);
+     plog('track_on', { from: p.identity }); session(); audioUi();
+   })
+   .on(E.TrackUnsubscribed, track => { track.detach(aud); if (curTrack === track) curTrack = null; plog('track_off'); audioUi(); })
+   .on(E.ParticipantConnected, audioUi).on(E.ParticipantDisconnected, audioUi);
+}
+async function lkJoin(){
+  clearTimeout(lkT);
+  if (!wantAudio || !name) return;
+  if (!window.LivekitClient) { lkT = setTimeout(lkJoin, 300); return; }
+  const old = lk;
+  lk = new LivekitClient.Room({ webAudioMix: false, disconnectOnPageLeave: false, adaptiveStream: false, dynacast: false });
+  lkBind(lk);
+  if (old) old.disconnect().catch(() => {});
+  const mine = lk;
+  try {
+    const t = await lkToken();
+    if (mine !== lk) return;
+    await mine.connect(t.url, t.token, { autoSubscribe: true });
+    lkTries = 0;
+    plog('connected', { n: mine.remoteParticipants.size });
+    await mine.startAudio().catch(() => {});
+  } catch (e) {
+    plog('join_fail', { e: String(e.message || e).slice(0, 120) });
+    if (mine === lk && wantAudio) lkT = setTimeout(lkJoin, Math.min(10000, 2000 * ++lkTries));
+  }
+  audioUi();
+}
+// داخل لمسة: تشغيل العنصر فورًا يفتح الصوت قبل وصول المسار
+function audioStart(why){
+  if (!name) return;
+  wantAudio = true; store.set('audio', true); audioOther = false;
+  aud.play().catch(() => {});
+  plog('audio_start', { why });
+  if (lk && lk.state !== 'disconnected') lk.startAudio().then(audioUi).catch(() => {});
+  else lkJoin();
+  audioUi();
+}
+function audioStop(){
+  wantAudio = false; store.set('audio', false); clearTimeout(lkT);
+  const r = lk; lk = null; curTrack = null;
+  if (r) r.disconnect().catch(() => {});
+  plog('audio_stop'); session(); audioUi();
+}
+$('#audioGo').onclick = () => audioStart(audioOther ? 'other' : 'go');
+$('#audioBtn').onclick = () => wantAudio && lk ? audioStop() : audioStart('button');
+['playing', 'pause', 'stalled', 'ended'].forEach(n => aud.addEventListener(n, () => plog('el_' + n)));
+// توقف لم يطلبه أحد (مكالمة على iOS): العنصر يعود "يعمل" والصوت ميت، ولا يحييه إلا اتصال جديد عند العودة
+aud.addEventListener('pause', () => { if (wantAudio && lk && !userPaused) interrupted = true; userPaused = false; });
+// بطاقة شاشة القفل (زر الإيقاف فيها لا يصل إلى الصفحة على iOS؛ قيد معروف)
+function session(){
+  if (!('mediaSession' in navigator)) return;
+  const ms = navigator.mediaSession, on = wantAudio && !!lk;
+  try {
+    ms.metadata = on ? new MediaMetadata({ title: D.t.audio_session_title, artist: D.t.page_title }) : null;
+    ms.playbackState = on ? 'playing' : 'none';
+    ms.setActionHandler('play', on ? () => { plog('ms_play'); aud.play().catch(() => {}); } : null);
+    ms.setActionHandler('pause', on ? () => { plog('ms_pause'); userPaused = true; audioStop(); } : null);
+  } catch (e) {}
+}
+// الغياب والعودة: مدته، وحال الصوت وقناة Supabase عند العودة
+let hiddenAt = 0, gapTick = Date.now(), maxGap = 0;
+setInterval(() => { const n = Date.now(), g = n - gapTick; gapTick = n; if (g > 3000) { if (document.hidden) maxGap = Math.max(maxGap, g); else plog('js_gap', { ms: g }); } }, 1000);
+const sbUp = () => !!sb?.realtime?.isConnected?.();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { hiddenAt = Date.now(); plog('hidden', { lk: lk?.state, paused: aud.paused, sb: sbUp() }); probeFlush(); return; }
+  plog('visible', { ms: hiddenAt ? Date.now() - hiddenAt : 0, max_gap: maxGap, lk: lk?.state, paused: aud.paused, can: lk?.canPlaybackAudio, sb: sbUp() });
+  hiddenAt = 0; maxGap = 0;
+  if (wantAudio && lk && interrupted) { interrupted = false; plog('rejoin_auto'); lkJoin(); }
+  else if (wantAudio && lk && (aud.paused || !lk.canPlaybackAudio)) { aud.play().catch(() => {}); lk.startAudio().then(audioUi).catch(() => {}); }
+  audioUi(); probeFlush();
+});
+addEventListener('online', () => { plog('page_online'); if (wantAudio && lk && lk.state === 'disconnected') lkJoin(); });
+addEventListener('offline', () => plog('page_offline'));
+plog('open', { audio: wantAudio, named: !!name });
+audioUi();
+
 /* ---------- الاتصال ---------- */
 function setStatus(on){ $('#status').classList.toggle('on', on); $('#statusTxt').textContent = on ? D.t.online : D.t.offline; }
 // إذا صفّر المقدّم الغرفة: نمسح علامات التصويت والمشاركات المحفوظة، ونعيد تسجيل الاسم
@@ -736,11 +892,11 @@ function connect(){
   fetchState(); register();
   sb.channel('aiws-phone-' + device.slice(0, 8))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'aiws_state', filter: 'room=eq.' + D.room }, ({ new: s }) => { if (s && s.mode) applyState(s); })
-    .subscribe(st => setStatus(st === 'SUBSCRIBED'));
+    .subscribe(st => { setStatus(st === 'SUBSCRIBED'); plog('sb_phone', { st }); });
   presence = sb.channel('aiws-room-' + D.room, { config: { presence: { key: device } } });
   // المقدّم ينزل اليد من شاشة العرض
   presence.on('broadcast', { event: 'lower' }, ({ payload }) => { if (payload && (payload.d === device || payload.d === '*')) setHand(false); })
-    .subscribe(st => { live = st === 'SUBSCRIBED'; if (live) track(); });
+    .subscribe(st => { live = st === 'SUBSCRIBED'; if (live) track(); plog('sb_room', { st }); });
   // iPhone يوقف الاتصال عند قفل الشاشة؛ نحدّث الحالة عند العودة ودوريًا
   document.addEventListener('visibilitychange', () => { if (!document.hidden) fetchState(); });
   setInterval(fetchState, 15000);

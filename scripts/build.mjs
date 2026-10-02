@@ -131,7 +131,7 @@ const deckData = {
 // g: النشاط الذي يخصّه الأمر (share للنشاط التطبيقي، create لتحدّي الإبداع)؛ تُفتح أوامره تلقائيًا في الجوال
 const pl = (id, g) => promptList(id).map(p => ({ title: plain(p.title), text: plain(p.text), icon: p.icon, g }));
 const joinData = {
-  ...live,
+  ...live, fn: cfg.supabaseUrl.replace(/\/$/, '') + '/functions/v1/aiws_live_token',
   prompts: [...pl('prompts', 'share'), ...pl('challenge', 'create')],
   t: {
     ...Object.fromEntries(Object.entries(C['join-page']).map(([k, v]) => [k, plain(v)])),
