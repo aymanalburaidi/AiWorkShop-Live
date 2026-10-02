@@ -193,3 +193,15 @@
 
 ## audio_session_title
 ورشة العمل: بث مباشر
+
+## audio_gate_title
+ورشة العمل مباشرة الآن
+
+## audio_gate_text
+صوت المقدّم يبدأ مع اللمس.
+
+## audio_gate_button
+متابعة الجلسة
+
+## rotate_tip
+تدوير الجهاز أفقيًا يفتح العرض بملء الشاشة
