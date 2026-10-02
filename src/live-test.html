@@ -133,6 +133,7 @@ const PRESENTER = new URLSearchParams(location.search).has('p');
 const role = PRESENTER ? 'presenter' : 'listener';
 let variant = store.get('variant', 'plain');
 let room = null, want = false, key = null, rejoinT = null, tries = 0;
+let curTrack = null, interrupted = false, userPaused = false;   // interrupted: توقف الصوت دون طلب (مكالمة مثلًا)
 
 /* ---------- السجل: يُعرض ويُرسل إلى aiws_live_probe (ويبقى في الجهاز حتى يُرسل) ---------- */
 const queue = store.get('q', []);
@@ -209,10 +210,10 @@ function bind(r){
    .on(E.AudioPlaybackStatusChanged, () => { log('playback', { can: r.canPlaybackAudio }, r.canPlaybackAudio ? 'good' : 'bad'); audioUi(); })
    .on(E.TrackSubscribed, (track, pub, p) => {
      if (track.kind !== 'audio') return;
-     track.attach(aud);
+     curTrack = track; track.attach(aud);
      log('track_on', { from: p.identity }, 'good'); audioUi(); session();
    })
-   .on(E.TrackUnsubscribed, (track, pub, p) => { track.detach(aud); log('track_off', { from: p.identity }, 'bad'); audioUi(); })
+   .on(E.TrackUnsubscribed, (track, pub, p) => { track.detach(aud); if (curTrack === track) curTrack = null; log('track_off', { from: p.identity }, 'bad'); audioUi(); })
    .on(E.TrackMuted, (pub, p) => log('muted', { who: p.identity }))
    .on(E.TrackUnmuted, (pub, p) => log('unmuted', { who: p.identity }))
    .on(E.ParticipantConnected, p => { log('joined', { who: p.identity, name: p.name }); people(); })
@@ -270,12 +271,22 @@ $('#listenBtn').onclick = async () => {
   log('listen_tap');
   join();
 };
-$('#tapBtn').onclick = () => { log('audio_tap'); resume('tap'); };
+$('#tapBtn').onclick = () => { log('audio_tap'); reattach('tap'); };
+// بعد مكالمة على iOS يعود عنصر الصوت "يعمل" والصوت ميت: يُعاد ربط المسار بالعنصر من جديد
+function reattach(why){
+  interrupted = false;
+  if (curTrack) { curTrack.detach(aud); curTrack.attach(aud); }
+  aud.play().then(() => { log('reattach_ok', { why }, 'good'); $('#tapBtn').hidden = true; })
+    .catch(e => { log('reattach_fail', { why, e: e.name }, 'bad'); $('#tapBtn').hidden = false; });
+  if (room) room.startAudio().then(audioUi).catch(() => {});
+}
 function resume(why){
   aud.play().then(() => log('resume_ok', { why }, 'good')).catch(e => log('resume_fail', { why, e: e.name }, 'bad'));
   if (room) room.startAudio().then(audioUi).catch(() => {});
 }
 ['playing', 'pause', 'stalled', 'waiting', 'ended', 'emptied'].forEach(n => aud.addEventListener(n, () => log('el_' + n, null, n === 'playing' ? 'good' : n === 'pause' ? 'bad' : '')));
+aud.addEventListener('pause', () => { if (want && !PRESENTER && !userPaused) interrupted = true; userPaused = false; });
+aud.addEventListener('playing', () => { if (interrupted) reattach('playing'); });
 
 // Media Session: بطاقة في شاشة القفل وزر تشغيل منها؛ ومع العودة للصفحة يُستأنف الصوت تلقائيًا
 function session(){
@@ -284,8 +295,8 @@ function session(){
   try {
     ms.metadata = on ? new MediaMetadata({ title: D.t.session_title, artist: D.t.session_artist }) : null;
     ms.playbackState = on ? 'playing' : 'none';
-    ms.setActionHandler('play', on ? () => { log('ms_play'); resume('ms_play'); ms.playbackState = 'playing'; } : null);
-    ms.setActionHandler('pause', on ? () => { log('ms_pause'); aud.pause(); ms.playbackState = 'paused'; } : null);
+    ms.setActionHandler('play', on ? () => { log('ms_play'); reattach('ms_play'); ms.playbackState = 'playing'; } : null);
+    ms.setActionHandler('pause', on ? () => { log('ms_pause'); userPaused = true; aud.pause(); ms.playbackState = 'paused'; } : null);
   } catch (e) { log('ms_error', { e: e.name }); }
 }
 
@@ -295,7 +306,8 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) { hiddenAt = Date.now(); log('hidden', { state: room?.state, paused: aud.paused }); flush(); return; }
   const ms = hiddenAt ? Date.now() - hiddenAt : 0; hiddenAt = 0;
   log('visible', { ms, max_gap: maxGap, state: room?.state, paused: aud.paused, can: room?.canPlaybackAudio }); maxGap = 0;
-  if (!PRESENTER && want && variant === 'session' && (aud.paused || !room?.canPlaybackAudio)) resume('visible');
+  if (!PRESENTER && want && interrupted) reattach('visible');
+  else if (!PRESENTER && want && variant === 'session' && (aud.paused || !room?.canPlaybackAudio)) resume('visible');
   if (!PRESENTER && want && ms > 5000) { lastGap = ms; $('#gap').textContent = Math.round(ms / 1000) + ' ' + D.t.sec; $('#verdict').hidden = false; }
   audioUi(); flush();
 });
