@@ -55,6 +55,7 @@ legend{font-size:.88rem;color:var(--muted);margin-bottom:6px}
 .verdict{border:1px solid var(--sand);border-radius:14px;padding:12px;display:grid;gap:10px}
 .verdict p b{direction:ltr;unicode-bidi:isolate}
 .err{color:var(--red);font-size:.9rem}
+.dup{border-color:var(--sand)}
 .people{list-style:none;display:grid;gap:6px;font-size:.9rem}
 .people li{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.04)}
 .people small{color:var(--muted);direction:ltr}
@@ -70,6 +71,10 @@ legend{font-size:.88rem;color:var(--muted);margin-bottom:6px}
     <h1>اختبار الصوت المباشر</h1>
     <span class="st" id="st"><i></i><span id="stText">غير متصل</span></span>
   </header>
+  <div class="card dup" id="dup" hidden>
+    <p>فُتحت هذه الصفحة بالهوية نفسها في جهاز أو تبويب آخر، فتوقف الاتصال هنا. صفحة مقدّم واحدة فقط في كل وقت.</p>
+    <button class="btn primary full" id="rejoinBtn">إعادة الاتصال</button>
+  </div>
 
   <section class="card" id="listener">
     <p class="hint">صفحة تجريبية تقيس ثبات الصوت عند قفل الشاشة وتبديل التطبيقات. تُسجَّل الأحداث تلقائيًا.</p>
@@ -115,7 +120,7 @@ legend{font-size:.88rem;color:var(--muted);margin-bottom:6px}
 </main>
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.3/dist/livekit-client.umd.js"></script>
 <script>
-const D = {"url":"https://dqedhfwaquqaddbtfvtx.supabase.co","key":"sb_publishable_zROcySsWThanD_me0Dq8dw_tGAHzGKk","room":"live-lab","fn":"https://dqedhfwaquqaddbtfvtx.supabase.co/functions/v1/aiws_live_token","t":{"page_title":"اختبار الصوت المباشر","intro_title":"اختبار الصوت المباشر","intro_hint":"صفحة تجريبية تقيس ثبات الصوت عند قفل الشاشة وتبديل التطبيقات. تُسجَّل الأحداث تلقائيًا.","label_placeholder":"اسم الجهاز (مثال: iPhone 13)","variant_label":"طريقة التشغيل","variant_plain":"عادية","variant_session":"مع شاشة القفل (Media Session)","listen":"بدء الاستماع","stop":"إيقاف","tap_audio":"تشغيل الصوت (المتصفح يطلب لمسة)","st_idle":"غير متصل","st_connecting":"جارٍ الاتصال","st_connected":"متصل","st_reconnecting":"إعادة الاتصال","st_disconnected":"انقطع الاتصال","audio_on":"صوت المقدّم يصل","audio_off":"لا صوت من المقدّم بعد","audio_blocked":"الصوت متوقف حتى اللمس","verdict_q":"هل استمر الصوت أثناء الغياب؟","verdict_yes":"استمر","verdict_no":"انقطع","verdict_saved":"سُجّل الحكم","log_title":"سجل الأحداث","pending":"بانتظار الإرسال","sec":"ث","session_title":"ورشة العمل: بث مباشر","session_artist":"بوابة الحضور","presenter_title":"وضع المقدّم","password_placeholder":"كلمة السر","unlock":"فتح","wrong":"كلمة السر غير صحيحة.","checking":"جارٍ التحقق","source_label":"مصدر الصوت","source_mic":"المايك","source_tone":"نغمة اختبار (نبضة كل ثانية)","publish":"بدء البث","unpublish":"إيقاف البث","listeners":"المستمعون","listeners_none":"لا أحد متصل","token_error":"تعذّر الحصول على إذن الدخول.","mic_error":"تعذّر فتح المايك."}};
+const D = {"url":"https://dqedhfwaquqaddbtfvtx.supabase.co","key":"sb_publishable_zROcySsWThanD_me0Dq8dw_tGAHzGKk","room":"live-lab","fn":"https://dqedhfwaquqaddbtfvtx.supabase.co/functions/v1/aiws_live_token","t":{"page_title":"اختبار الصوت المباشر","intro_title":"اختبار الصوت المباشر","intro_hint":"صفحة تجريبية تقيس ثبات الصوت عند قفل الشاشة وتبديل التطبيقات. تُسجَّل الأحداث تلقائيًا.","label_placeholder":"اسم الجهاز (مثال: iPhone 13)","variant_label":"طريقة التشغيل","variant_plain":"عادية","variant_session":"مع شاشة القفل (Media Session)","listen":"بدء الاستماع","stop":"إيقاف","tap_audio":"تشغيل الصوت (المتصفح يطلب لمسة)","st_idle":"غير متصل","st_connecting":"جارٍ الاتصال","st_connected":"متصل","st_reconnecting":"إعادة الاتصال","st_disconnected":"انقطع الاتصال","audio_on":"صوت المقدّم يصل","audio_off":"لا صوت من المقدّم بعد","audio_blocked":"الصوت متوقف حتى اللمس","verdict_q":"هل استمر الصوت أثناء الغياب؟","verdict_yes":"استمر","verdict_no":"انقطع","verdict_saved":"سُجّل الحكم","log_title":"سجل الأحداث","pending":"بانتظار الإرسال","sec":"ث","session_title":"ورشة العمل: بث مباشر","session_artist":"بوابة الحضور","presenter_title":"وضع المقدّم","password_placeholder":"كلمة السر","unlock":"فتح","wrong":"كلمة السر غير صحيحة.","checking":"جارٍ التحقق","source_label":"مصدر الصوت","source_mic":"المايك","source_tone":"نغمة اختبار (نبضة كل ثانية)","publish":"بدء البث","unpublish":"إيقاف البث","listeners":"المستمعون","listeners_none":"لا أحد متصل","token_error":"تعذّر الحصول على إذن الدخول.","mic_error":"تعذّر فتح المايك.","dup_identity":"فُتحت هذه الصفحة بالهوية نفسها في جهاز أو تبويب آخر، فتوقف الاتصال هنا. صفحة مقدّم واحدة فقط في كل وقت.","rejoin":"إعادة الاتصال"}};
 const LK = window.LivekitClient, E = LK.RoomEvent;
 const $ = s => document.querySelector(s);
 const aud = $('#aud');
@@ -196,6 +201,9 @@ function bind(r){
    .on(E.Disconnected, reason => {
      log('disconnected', { reason, name: LK.DisconnectReason?.[reason] }, 'bad');
      audioUi();
+     if (PRESENTER && r === room) dropPub();
+     // الهوية نفسها دخلت من مكان آخر: لا عودة تلقائية، وإلا تطرد الصفحتان بعضهما بلا نهاية
+     if (want && r === room && reason === LK.DisconnectReason.DUPLICATE_IDENTITY) { want = false; clearTimeout(rejoinT); status('idle'); $('#dup').hidden = false; $('#listenBtn').textContent = D.t.listen; session(); return; }
      if (want && r === room) { clearTimeout(rejoinT); rejoinT = setTimeout(join, Math.min(10000, 2000 * ++tries)); }
    })
    .on(E.AudioPlaybackStatusChanged, () => { log('playback', { can: r.canPlaybackAudio }, r.canPlaybackAudio ? 'good' : 'bad'); audioUi(); })
@@ -227,6 +235,7 @@ async function join(){
     tries = 0;
     log('connected', { id: t.identity, n: room.remoteParticipants.size }, 'good');
     if (!PRESENTER) { await room.startAudio().catch(() => {}); audioUi(); }
+    if (PRESENTER && pubSrc) await publish(pubSrc);   // بعد إعادة الاتصال يُعاد نشر الصوت تلقائيًا
     people();
   } catch (e) {
     log('join_fail', { e: String(e.message || e).slice(0, 120) }, 'bad');
@@ -248,7 +257,13 @@ document.querySelectorAll('input[name=variant]').forEach(x => {
   x.checked = x.value === variant;
   x.onchange = () => { variant = x.value; store.set('variant', variant); log('variant', { v: variant }); session(); };
 });
+$('#rejoinBtn').onclick = () => {
+  $('#dup').hidden = true; want = true; log('rejoin_tap');
+  if (!PRESENTER) { $('#listenBtn').textContent = D.t.stop; aud.play().catch(() => {}); }
+  join();
+};
 $('#listenBtn').onclick = async () => {
+  $('#dup').hidden = true;
   if (want) { $('#listenBtn').textContent = D.t.listen; return leave(); }
   want = true; $('#listenBtn').textContent = D.t.stop;
   aud.play().catch(() => {});   // داخل اللمسة نفسها: يفتح عنصر الصوت قبل وصول المسار
@@ -303,7 +318,7 @@ setInterval(() => {
 }, 1000);
 
 /* ---------- المقدّم ---------- */
-let pubTrack = null, toneCtx = null;
+let pubTrack = null, toneCtx = null, pubSrc = null;   // pubSrc: ما يريد المقدّم بثه (mic أو tone) ويبقى عبر إعادة الاتصال
 function locked(wrong){
   $('#lockForm').hidden = false; $('#pub').hidden = true; $('#err').hidden = !wrong;
   if (wrong) { try { localStorage.removeItem('aiws_key'); } catch (e) {} }
@@ -318,17 +333,17 @@ async function unlock(k){
   $('#lockForm').hidden = true; $('#pub').hidden = false;
 }
 $('#lockForm').onsubmit = e => { e.preventDefault(); $('#err').hidden = true; const v = $('#pw').value.trim(); if (v) unlock(v); };
-$('#pubBtn').onclick = async () => {
+// يحرر موارد البث المحلية دون أن يلغي نية البث (pubSrc)
+function dropPub(){
+  if (pubTrack) { pubTrack.stop(); pubTrack = null; }
+  if (toneCtx) { toneCtx.close().catch(() => {}); toneCtx = null; }
+}
+async function publish(src){
   const lp = room && room.localParticipant;
   if (!lp) return;
-  const btn = $('#pubBtn'); btn.disabled = true;
+  dropPub();
   try {
-    if (pubTrack || lp.isMicrophoneEnabled) {
-      if (pubTrack) { await lp.unpublishTrack(pubTrack); pubTrack.stop(); pubTrack = null; }
-      else await lp.setMicrophoneEnabled(false);
-      if (toneCtx) { toneCtx.close(); toneCtx = null; }
-      btn.textContent = D.t.publish; log('unpublish');
-    } else if (document.querySelector('input[name=source]:checked').value === 'tone') {
+    if (src === 'tone') {
       // نغمة بلا مؤقتات: موجة 660Hz يفتحها ويغلقها مذبذب مربع بتردد 1Hz (نصف ثانية صوت، نصف صمت)
       toneCtx = new AudioContext();
       const osc = toneCtx.createOscillator(), g = toneCtx.createGain(), lfo = toneCtx.createOscillator(), depth = toneCtx.createGain(), dest = toneCtx.createMediaStreamDestination();
@@ -336,12 +351,26 @@ $('#pubBtn').onclick = async () => {
       lfo.connect(depth).connect(g.gain); osc.connect(g).connect(dest); osc.start(); lfo.start();
       pubTrack = dest.stream.getAudioTracks()[0];
       await lp.publishTrack(pubTrack, { name: 'tone', source: LK.Track.Source.Microphone });
-      btn.textContent = D.t.unpublish; log('publish', { src: 'tone' }, 'good');
     } else {
       await lp.setMicrophoneEnabled(true, { echoCancellation: true, noiseSuppression: true, autoGainControl: true });
-      btn.textContent = D.t.unpublish; log('publish', { src: 'mic' }, 'good');
     }
+    log('publish', { src }, 'good');
   } catch (e) { log('publish_fail', { e: e.name || String(e) }, 'bad'); alert(D.t.mic_error); }
+}
+$('#pubBtn').onclick = async () => {
+  const lp = room && room.localParticipant;
+  if (!lp) return;
+  const btn = $('#pubBtn'); btn.disabled = true;
+  if (pubSrc) {
+    pubSrc = null;
+    if (pubTrack) await lp.unpublishTrack(pubTrack).catch(() => {});
+    else await lp.setMicrophoneEnabled(false).catch(() => {});
+    dropPub(); btn.textContent = D.t.publish; log('unpublish');
+  } else {
+    pubSrc = document.querySelector('input[name=source]:checked').value;
+    await publish(pubSrc);
+    btn.textContent = D.t.unpublish;
+  }
   btn.disabled = false;
 };
 function people(){
